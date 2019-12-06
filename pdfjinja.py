@@ -35,6 +35,7 @@ PY3 = False
 if sys.version_info[0] == 3:
     PY3 = True
 
+xrange = range
 
 try:
     from logging import NullHandler
@@ -174,10 +175,7 @@ class PdfJinja(object):
                 tmpl = ref["TU"]
 
                 try:
-                    if ref["TU"].startswith(b"\xfe"):
-                        tmpl = tmpl.decode("utf-16")
-                    else:
-                        tmpl = tmpl.decode("utf-8")
+                    tmpl = tmpl.decode("latin1")
                     field["template"] = self.jinja_env.from_string(tmpl)
                 except (UnicodeDecodeError, TemplateSyntaxError) as err:
                     logger.error("%s: %s %s", name, tmpl, err)
@@ -234,7 +232,7 @@ class PdfJinja(object):
                 # Skip the field if it is already rendered by filter
                 if field not in self.rendered:
                     if PY3:
-                        field = field.decode('utf-8')
+                        field = field.decode('latin1')
                     self.rendered[field] = rendered_field
 
         filled = PdfFileReader(self.exec_pdftk(self.rendered))
@@ -243,7 +241,7 @@ class PdfJinja(object):
             page.mergePage(watermark)
 
         output = PdfFileWriter()
-        pages = pages or range(filled.getNumPages())
+        pages = pages or xrange(filled.getNumPages())
         for p in pages:
             output.addPage(filled.getPage(p))
 
